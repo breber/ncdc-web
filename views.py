@@ -1,5 +1,6 @@
 import datetime
 import time
+import ldap
 import logging
 import json
 
@@ -87,24 +88,78 @@ class Login(UserAwareView):
 
     def post(self):
         form = forms.LoginForm(request.form)
-        authorized = False
-        error = ''
+        user = None
 
         username = form.username.data
         password = form.password.data
         remember = form.remember_me.data
 
         if form.validate():
-            user = User.get_user_by_username(username)
-            if not user:
-                return "Incorrect Username"
-            authorized = utils.check_password(password, user)
+            try:
+                logging.warning("Starting LDAP")
+                conn = ldap.initialize('ldap://192.168.78.128')
+                conn.protocol_version = 3
+                conn.set_option(ldap.OPT_REFERRALS, 0)
+                conn.simple_bind_s(username + '@corp.brianreber.com', password)
+            
+                result_id = conn.search('DC=corp,DC=brianreber,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
+                
+                result_set = []
+                while 1:
+                    result_type, result_data = conn.result(result_id, 0)
+                    if (result_data == []):
+                        break
+                    else:
+                        if result_type == ldap.RES_SEARCH_ENTRY:
+                            result_set.append(result_data)
 
-            if authorized:
+                isAdmin = False
+                isActive = False
+                isApprover = False
+                
+                if len(result_set) > 0:
+                    for i in range(len(result_set)):
+                        for entry in result_set[i]:
+                            entry_tuple = entry[1]
+                            logging.debug("Entry: %s" % entry_tuple)
+                            if len(entry_tuple) > 0:
+                                for group in entry_tuple['memberOf']:
+                                    logging.debug("Group: %s" % group)
+                                    if "CN=cdc," in group:
+                                        isActive = True
+                                    if "CN=cdc-admins," in group:
+                                        isAdmin = True
+                                    if "CN=cdc-approvers," in group:
+                                        isApprover = True
+                
+                # At this point, we have gotten the user from
+                # the AD server, and verified that they are
+                # active
+                if isActive:
+                    logging.debug("%s: isActive: %s" % (username, isActive))
+                    logging.debug("%s: isAdmin: %s" % (username, isAdmin))
+                    logging.debug("%s: isApprover: %s" % (username, isApprover))
+                    user = User.get_user_by_username(username)
+                
+                    if not user:
+                        logging.debug("Creating User for: %s" % username)
+                        user = User(username=username,
+                                    is_approver=isApprover,
+                                    is_admin=isAdmin,
+                                    ssn="00000000")
+            
+            except ldap.INVALID_CREDENTIALS:
+                logging.warning("Invalid Credentials")
+                return "incorrect username or password"
+            
+            if user:
+                user.save()
+
+                logging.debug("Authorized!")
                 flask_login.login_user(user, remember=remember)
                 return "success"
-
-        return "Incorrect Password"
+            
+        return "incorrect username or password"
 
 
 class Logout(UserAwareView):
@@ -123,6 +178,9 @@ class Payroll(UserAwareView):
     The view for the payroll page.
     """
     def get(self, payroll_user=None, week=None):
+        if not payroll_user and not self.user:
+            return redirect(url_for('login'))
+
         start_date = utils.get_last_monday(datetime.date.today())
         end_date = start_date + datetime.timedelta(days=6)
         if week:
@@ -258,18 +316,16 @@ class AddUser(UserAwareView):
         form = forms.AddUser(request.form)
         if form.validate():
             username = form.username.data
-            password = form.password.data
             is_admin = form.is_admin.data
             is_approver = form.is_approver.data
             ssn = form.ssn.data
             wage = form.wage.data
 
             user = User(username=username,
-                 password=password,
-                 is_admin=is_admin,
-                 is_approver=is_approver,
-                 ssn=ssn,
-                 wage=wage).save()
+                        is_admin=is_admin,
+                        is_approver=is_approver,
+                        ssn=ssn,
+                        wage=wage).save()
 
             data = {'user': user}
 

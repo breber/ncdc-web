@@ -1,13 +1,16 @@
+import logging
 import os
 import sys
 from flask import Flask, render_template, redirect, url_for
-from flask_mongoengine import MongoEngine
+from flask.ext.mongoengine import MongoEngine
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager
 
 from utils import user_unauthorized_callback, load_user
 
 from urls import add_urls
+
+logging.basicConfig(level=logging.DEBUG)
 
 # Determining the project root.
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
