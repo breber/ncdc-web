@@ -100,9 +100,9 @@ class Login(UserAwareView):
                 conn = ldap.initialize('ldap://192.168.78.128')
                 conn.protocol_version = 3
                 conn.set_option(ldap.OPT_REFERRALS, 0)
-                conn.simple_bind_s(username + '@corp.brianreber.com', password)
+                conn.simple_bind_s(username + '@site2.cdc.com', password)
             
-                result_id = conn.search('DC=corp,DC=brianreber,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
+                result_id = conn.search('DC=site2,DC=cdc,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
                 
                 result_set = []
                 while 1:
@@ -159,7 +159,7 @@ class Login(UserAwareView):
                 flask_login.login_user(user, remember=remember)
                 return "success"
             
-        return "incorrect username or password"
+        return "Incorrect username or password"
 
 
 class Logout(UserAwareView):
