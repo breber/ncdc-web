@@ -1,7 +1,5 @@
 import datetime
 
-import utils
-
 from flask.ext.mongoengine import Document
 from flask.ext.mongoengine import DoesNotExist
 from flask.ext.mongoengine import MultipleObjectsReturned
@@ -105,40 +103,6 @@ class TimeRecord(Document):
         time_worked = self.clock_out - self.clock_in
         self.hours = time_worked.seconds / 3600.0
         return self.hours
-
-    @classmethod
-    def get_current_week(cls, username, today=datetime.date.today()):
-        """
-        Given a day, this will return a weeks worth of TimeRecords objects, starting with Monday,
-        that contains the date passed in as today.
-
-        :param username: The username to lookup
-        :param today: The day to use to look up the week.  Defaults to today.
-        :returns: A list of TimeRecord objects, for the username given, that is a payroll week
-        containing the day given.
-        """
-
-        try:
-            user = User.objects(username=username).get()
-        except DoesNotExist, e:
-            return
-
-        last_monday = utils.get_last_monday(today)
-        next_monday = last_monday + datetime.timedelta(days=7)
-        records = TimeRecord.objects(date__gte=last_monday,
-                                     date__lt=next_monday,
-                                     username=username).order_by('date')
-        if len(records) < 7:
-            for day in xrange(7):
-                date = last_monday + datetime.timedelta(days=day)
-                try:
-                    record = TimeRecord.objects(date=date, username=username).get()
-                except DoesNotExist, e:
-                    TimeRecord(date=date, username=username).save()
-            records = TimeRecord.objects(date__gte=last_monday,
-                                         date__lt=next_monday,
-                                         username=username).order_by('date')
-        return records
 
     @classmethod
     def get_approved_records_by_username(cls, username, num_days=None):

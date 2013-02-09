@@ -1,20 +1,15 @@
 import datetime
-import time
+import flask_login
+import forms
 import ldap
 import logging
 import json
 import tempfile
+import time
 
 from flask import render_template, request, redirect, url_for, session, abort, send_file
-
 from flask.views import MethodView
-import flask_login
 from flask_login import login_required
-
-from settings import API_SERVER
-
-import utils
-import forms
 from models import User, TimeRecord
 
 
