@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Cyclone Development Company - Reporting</title>
+
+        <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+
+    </head>
+
+    <body>
+        <div id="main-wrapper">
+            <div class="container-narrow">
+
+                <div class="masthead">
+                    <ul class="nav nav-pills pull-right">
+                    {% if user %}
+                        <li><a>{{ user.username }}</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% endif %}
+                    </ul>
+                </div>
+
+                {% block main %}{% endblock %}
+
+                <div id="push"></div>
+            </div>
+
+        </div>
+
+        <div id="footer">
+            <div class="container-narrow">
+                <hr>
+                <p>&copy; Cyclone Development Company 2013</p>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+
+        {% block js %}{% endblock %}
+
+    </body>
+</html>

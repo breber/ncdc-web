@@ -97,13 +97,13 @@ class Login(UserAwareView):
         if form.validate():
             try:
                 logging.warning("Starting LDAP")
-                conn = ldap.initialize('ldap://192.168.78.128')
+                conn = ldap.initialize('ldap://192.168.1.50')
                 conn.protocol_version = 3
                 conn.set_option(ldap.OPT_REFERRALS, 0)
                 conn.simple_bind_s(username + '@site2.cdc.com', password)
             
                 result_id = conn.search('DC=site2,DC=cdc,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
-                
+                                
                 result_set = []
                 while 1:
                     result_type, result_data = conn.result(result_id, 0)
@@ -150,7 +150,10 @@ class Login(UserAwareView):
             
             except ldap.INVALID_CREDENTIALS:
                 logging.warning("Invalid Credentials")
-                return "incorrect username or password"
+                user = None
+            except ldap.SERVER_DOWN:
+                logging.warning("Server down...")
+                user = None
             
             if user:
                 user.save()
