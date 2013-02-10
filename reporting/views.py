@@ -108,7 +108,6 @@ class Login(UserAwareView):
                     for i in range(len(result_set)):
                         for entry in result_set[i]:
                             entry_tuple = entry[1]
-                            logging.debug("Entry: %s" % entry_tuple)
                             if len(entry_tuple) > 0:
                                 for group in entry_tuple['memberOf']:
                                     logging.debug("Group: %s" % group)
