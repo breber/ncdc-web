@@ -20,8 +20,8 @@ app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, 'static'), static
 
 # Flask config settings
 app.config['MONGODB_DB'] = 'ncdc'
-app.config['SECRET_KEY'] = 'my_super_secret_key'
-app.debug = True
+app.config['SECRET_KEY'] = 'G7B8AjjCYb6W1wF8dLIrYTvjqGT2Mcqj0qspFzTb+T8m77YIkylufas3kinAXO8G'
+app.debug = False
 
 # Setting up the login manager for Flask-Login
 login_manager = LoginManager()
@@ -38,4 +38,4 @@ add_urls(app)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)

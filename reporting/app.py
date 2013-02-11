@@ -20,7 +20,8 @@ app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, 'static'), static
 
 # Flask config settings
 app.config['MONGODB_DB'] = 'ncdc'
-app.config['SECRET_KEY'] = 'my_super_secret_key'
+app.config['SECRET_KEY'] = 'G7B8AjjCYb6W1wF8dLIrYTvjqGT2Mcqj0qspFzTb+T8m77YIkylufas3kinAXO8G'
+app.debug = False
 
 # Setting up the login manager for Flask-Login
 login_manager = LoginManager()
