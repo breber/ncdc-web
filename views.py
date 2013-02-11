@@ -182,7 +182,7 @@ class Payroll(UserAwareView):
     decorators = [login_required]
     
     def get(self, payroll_user=None, week=None):
-        if payroll_user and not payroll_user == self.user:
+        if payroll_user and not payroll_user == self.user.username:
             return redirect(url_for("payroll"))
         
         start_date = utils.get_last_monday(datetime.date.today())
