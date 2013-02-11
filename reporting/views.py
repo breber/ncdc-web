@@ -43,13 +43,16 @@ class UserAwareView(MethodView):
 
         :returns: The current context with the user set.
         """
-        ctx = {
-            'user': self.user,
-        }
-        if extra_ctx:
-            ctx.update(extra_ctx)
-        ctx.update(kwargs)
-        return ctx
+        if self.user and self.user.is_admin:
+            ctx = {
+                'user': self.user,
+            }
+            if extra_ctx:
+                ctx.update(extra_ctx)
+            ctx.update(kwargs)
+            return ctx
+        else:
+            return {}
 
 
 class Home(UserAwareView):
@@ -59,9 +62,7 @@ class Home(UserAwareView):
     def get(self):
         context = self.get_context()
         
-        logging.warn("user: %s" % self.user)
-        
-        if not self.user:
+        if not self.user or not self.user.is_admin:
             context['form'] = forms.LoginForm()
             return render_template('index.html', **context)
         else:
@@ -159,10 +160,12 @@ class Export(UserAwareView):
     """
     The REST API endpoint for getting payroll info about a user.
     """
-    
     decorators = [login_required]
     
     def get(self, username):
+        if not self.user.is_admin:
+            return redirect(url_for('home'))
+        
         from openpyxl import Workbook
         OUTPUT_PATH = "/Users/breber/Desktop/"
         

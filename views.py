@@ -97,12 +97,12 @@ class Login(UserAwareView):
         if form.validate():
             try:
                 logging.warning("Starting LDAP")
-                conn = ldap.initialize('ldap://192.168.1.50')
+                conn = ldap.initialize('ldap://192.168.78.128')
                 conn.protocol_version = 3
                 conn.set_option(ldap.OPT_REFERRALS, 0)
-                conn.simple_bind_s(username + '@site2.cdc.com', password)
+                conn.simple_bind_s(username + '@corp.brianreber.com', password)
             
-                result_id = conn.search('DC=site2,DC=cdc,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
+                result_id = conn.search('DC=corp,DC=brianreber,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
                                 
                 result_set = []
                 while 1:
@@ -179,18 +179,20 @@ class Payroll(UserAwareView):
     """
     The view for the payroll page.
     """
+    decorators = [login_required]
+    
     def get(self, payroll_user=None, week=None):
-        if not payroll_user and not self.user:
-            return redirect(url_for('login'))
-
+        if payroll_user and not payroll_user == self.user:
+            return redirect(url_for("payroll"))
+        
         start_date = utils.get_last_monday(datetime.date.today())
         end_date = start_date + datetime.timedelta(days=6)
         if week:
             start_date = utils.get_last_monday(datetime.date.fromtimestamp(float(week)))
             end_date = start_date + datetime.timedelta(days=6)
-            records = TimeRecord.get_current_week(payroll_user or self.user.username, start_date)
+            records = TimeRecord.get_current_week(self.user.username, start_date)
         else:
-            records = TimeRecord.get_current_week(payroll_user or self.user.username)
+            records = TimeRecord.get_current_week(self.user.username)
         if not records:
             return abort(404)
 
@@ -200,7 +202,7 @@ class Payroll(UserAwareView):
             'nav':  'payroll',
             'user': self.user,
             'table_rows': records,
-            'payroll_username': payroll_user or self.user.username,
+            'username': self.user.username,
             'start_date': start_date,
             'end_date': end_date,
             'prev_timestamp': time.mktime(prev_date.timetuple()),
@@ -209,6 +211,9 @@ class Payroll(UserAwareView):
         return render_template('payroll.html', **context)
 
     def post(self, payroll_user=None, week=None):
+        if payroll_user and not payroll_user == self.user.username:
+            return redirect(url_for('payroll'))
+        
         for input, value in request.form.iteritems():
             if value:
                 punch_type, input_id = input.split('-')
@@ -242,7 +247,12 @@ class Approve(UserAwareView):
     """
     The view for the approve page.
     """
+    decorators = [login_required]
+    
     def get(self):
+        if not self.user.is_approver:
+            return redirect(url_for('payroll'))
+
         context = {
             'nav': 'approve',
             'user': self.user
@@ -255,6 +265,9 @@ class Approve(UserAwareView):
         return render_template('approve.html', **context)
 
     def post(self):
+        if not self.user.is_approver:
+            return ""
+
         id = None
         approver = None
         if 'id' in request.form:
@@ -276,7 +289,12 @@ class Admin(UserAwareView):
     """
     The view for the admin page.
     """
+    decorators = [login_required]
+    
     def get(self):
+        if not self.user.is_admin:
+            return redirect(url_for('payroll'))
+        
         users = User.objects()
         add_user_form = forms.AddUser()
         context = {
@@ -289,6 +307,9 @@ class Admin(UserAwareView):
         return render_template('admin.html', **context)
 
     def post(self):
+        if not self.user.is_admin:
+            return ""
+        
         if not 'username' in request.form:
             return 'error'
 
@@ -314,7 +335,12 @@ class AddUser(UserAwareView):
     """
     The AJAX endpoint for adding a user to the system.
     """
+    decorators = [login_required]
+    
     def post(self):
+        if not self.user.is_admin:
+            return ""
+        
         form = forms.AddUser(request.form)
         if form.validate():
             username = form.username.data
@@ -339,7 +365,12 @@ class DeleteUser(UserAwareView):
     """
     The AJAX endpoint for deleting a user from the system.
     """
+    decorators = [login_required]
+    
     def post(self):
+        if not self.user.is_admin:
+            return ""
+
         username = None
         operator = None
         logging.warning(request.form)
