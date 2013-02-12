@@ -97,7 +97,7 @@ class Login(UserAwareView):
         if form.validate():
             try:
                 logging.warning("Starting LDAP")
-                conn = ldap.initialize('ldap://192.168.1.50')
+                conn = ldap.initialize('ldap://192.168.1.5')
                 conn.protocol_version = 3
                 conn.set_option(ldap.OPT_REFERRALS, 0)
                 conn.simple_bind_s(username + '@site2.cdc.com', password)
