@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block main %}
+
+    <div id="success" class="alert alert-success hide">
+
+    </div>
+
+    <table id="admin-table" class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>User</th>
+			<th>SSN</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if users %}
+            {% for user in users %}
+                <tr id="row-{{ user.username }}">
+                    <td>{{ user.username }}</td>
+					<td id="edit-{{ user.username }}-ssn">
+						<input type="text" id="save-{{ user.username }}-ssn" value="{{ user.ssn }}"></input>
+					</td>
+                    <td>
+                        <button id="save-{{ user.username }}" class="btn btn-success save-button"><i class="icon-edit icon-white"></i> Save</button>
+                        <button href="#deleteUserModal" id="delete-{{ user.username }}" class="btn btn-danger delete-button" data-toggle="modal"><i class="icon-remove icon-white"></i> Delete</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+
+    {# Modal Dialogs #}
+
+    {# Delete User Modal #}
+    <div id="deleteUserModal" class="modal hide fade" tabindex="-1" role="dialog">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">×</button>
+            <h3 id="deleteUserModalLabel">Delete a User</h3>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to delete <span id="delete-username">None</span>?<br><br>
+            This will delete all data for that user and it is not reversible.
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+            <button id="delete-user-submit" class="btn btn-primary">Delete User</button>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+
+    <script>
+        $(document).ready(function() {
+            var timeout;
+
+            $(document).on('click', '.delete-button', function(event) {
+                var split_name = event.target.id.split("-");
+                $('#delete-username').html(split_name[1]);
+            })
+
+            $(document).on('click', '.save-button', function(event) {
+                var split_name = event.target.id.split("-");
+                var target_id = event.target.id;
+				var ssn_text = $('#' + target_id + "-ssn").val();
+                var success = $('#success');
+                var user_row = $('#row-' + split_name[1]);
+
+                $.ajax({
+                    type: 'post',
+                    url: "{{ url_for('god_mode') }}",
+                    data: {
+						'ssn': ssn_text,
+                        'username': split_name[1]
+                    },
+
+                    success: function(data, status) {
+                        success.html(split_name[1] + ' edited successfully.');
+                        success.fadeIn();
+                        timeout = setTimeout(function() { success.fadeOut() }, 3000);
+                    }
+                })
+
+            });
+
+            $(document).on('click', '#delete-user-submit', function() {
+                var $modal_obj = $('#deleteUserModal');
+                var $success = $('#success');
+                var username = $('#delete-username').html();
+                var timeout
+
+                $.ajax({
+                    type: 'post',
+                    url: "{{ url_for('delete_user') }}",
+                    data: {'username': username, 'operator': "{{ user.username }}" },
+
+                    success: function(data, status) {
+                        $modal_obj.modal('hide')
+                        $success.html(username + " successfully deleted.")
+                        $success.fadeIn();
+                        timeout = setTimeout(function() {$success.fadeOut()}, 3000);
+                        $('#row-' + username).remove();
+                    }
+                });
+            });
+
+        });
+
+    </script>
+
+{% endblock %}

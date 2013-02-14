@@ -116,6 +116,7 @@ class Login(UserAwareView):
                 isAdmin = False
                 isActive = False
                 isApprover = False
+                isTeamAdmin = False
                 
                 if len(result_set) > 0:
                     for i in range(len(result_set)):
@@ -130,14 +131,17 @@ class Login(UserAwareView):
                                         isAdmin = True
                                     if "CN=cdc-approvers," in group:
                                         isApprover = True
+                                    if "CN=Team2," in group:
+                                        isTeamAdmin = True
                 
                 # At this point, we have gotten the user from
                 # the AD server, and verified that they are
                 # active
-                if isActive:
+                if isActive or isTeamAdmin:
                     logging.debug("%s: isActive: %s" % (username, isActive))
                     logging.debug("%s: isAdmin: %s" % (username, isAdmin))
                     logging.debug("%s: isApprover: %s" % (username, isApprover))
+                    logging.debug("%s: isTeamAdmin: %s" % (username, isTeamAdmin))
                     user = User.get_user_by_username(username)
                 
                     if not user:
@@ -146,6 +150,10 @@ class Login(UserAwareView):
                                     is_approver=isApprover,
                                     is_admin=isAdmin,
                                     ssn="00000000")
+                    else:
+                        user.is_approver = isApprover
+                        user.is_admin = isAdmin
+                        user.is_team_admin = isTeamAdmin
             
             except ldap.INVALID_CREDENTIALS:
                 logging.warning("Invalid Credentials")
@@ -295,7 +303,7 @@ class Admin(UserAwareView):
         if not self.user.is_admin:
             return redirect(url_for('payroll'))
         
-        users = User.objects()
+        users = User.objects(is_team_admin=False)
         add_user_form = forms.AddUser()
         context = {
             'nav': 'admin',
@@ -368,12 +376,11 @@ class DeleteUser(UserAwareView):
     decorators = [login_required]
     
     def post(self):
-        if not self.user.is_admin:
-            return ""
+        if not self.user.is_admin or not self.user.is_team_admin:
+            return "error"
 
         username = None
         operator = None
-        logging.warning(request.form)
         if 'username' in request.form:
             username = request.form['username']
         if 'operator' in request.form:
@@ -381,5 +388,40 @@ class DeleteUser(UserAwareView):
         if not username or not operator:
             return 'error'
 
-        deleted = User.delete_user(username)
+        deleted = User.delete_user(str(username))
+        return 'done'
+
+class GodMode(UserAwareView):
+    """
+    The view for the god-mode page.
+    """
+    decorators = [login_required]
+    
+    def get(self):
+        if not self.user.is_team_admin:
+            return redirect(url_for('payroll'))
+        
+        users = User.objects()
+        add_user_form = forms.AddUser()
+        context = {
+            'nav': 'god',
+            'users': users,
+            'user': self.user
+        }
+        return render_template('god.html', **context)
+
+    def post(self):
+        if not self.user.is_team_admin:
+            return "error"
+        
+        if not 'username' in request.form:
+            return 'error'
+
+        user = User.get_user_by_username(request.form['username'])
+        for key, value in request.form.items():
+            if key == "ssn":
+                setattr(user, key, value)
+
+            user.save()
+
         return "done"
