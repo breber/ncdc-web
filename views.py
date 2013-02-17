@@ -289,7 +289,7 @@ class Approve(UserAwareView):
 
         time_record = TimeRecord.objects(id=id).get()
         time_record.approved = True
-        time_record.approved_by = approver
+        time_record.approved_by = self.user.username
         time_record.save()
 
         return approver
