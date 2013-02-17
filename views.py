@@ -3,6 +3,7 @@ import time
 import ldap
 import logging
 import json
+import re
 
 from flask import render_template, request, redirect, url_for, session, abort
 
@@ -91,6 +92,7 @@ class Login(UserAwareView):
         user = None
 
         username = form.username.data
+        username = re.escape(username)
         password = form.password.data
         remember = form.remember_me.data
 
