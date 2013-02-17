@@ -19,6 +19,7 @@ class User(Document):
     username = StringField(max_length=255, required=True)
     is_approver = BooleanField(default=False, required=True)
     is_admin = BooleanField(default=False, required=True)
+    is_team_admin = BooleanField(default=False)
     ssn = StringField(default=None)
     wage = FloatField(default=7.50)
 

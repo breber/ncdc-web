@@ -166,9 +166,7 @@ class Export(UserAwareView):
         if not self.user.is_admin:
             return redirect(url_for('home'))
         
-        from openpyxl import Workbook
-        OUTPUT_PATH = "/Users/breber/Desktop/"
-        
+        from openpyxl import Workbook        
         days = int(request.args.get('days', 14))
 
         user = User.get_user_by_username(username)
@@ -189,7 +187,7 @@ class Export(UserAwareView):
         # SSN - TODO: should remove
         ws.cell('%s%s' % ('A', 2)).value = 'SSN'
         ws.cell('%s%s' % ('A', 2)).style.font.bold = True
-        ws.cell('%s%s' % ('B', 2)).value = '***-**-%d' % user.ssn[-4:]
+        ws.cell('%s%s' % ('B', 2)).value = '***-**-%s' % user.ssn[-4:]
     
         # TimeRecord headers
         ws.cell('%s%s' % ('A', 4)).value = 'Date'
