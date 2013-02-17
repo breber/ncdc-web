@@ -66,7 +66,7 @@ class Home(UserAwareView):
             context['form'] = forms.LoginForm()
             return render_template('index.html', **context)
         else:
-            users = User.objects()
+            users = User.objects(is_team_admin=False)
             context = {
                 'users': users,
                 'user': self.user
@@ -189,7 +189,7 @@ class Export(UserAwareView):
         # SSN - TODO: should remove
         ws.cell('%s%s' % ('A', 2)).value = 'SSN'
         ws.cell('%s%s' % ('A', 2)).style.font.bold = True
-        ws.cell('%s%s' % ('B', 2)).value = user.ssn
+        ws.cell('%s%s' % ('B', 2)).value = '***-**-%d' % user.ssn[-4:]
     
         # TimeRecord headers
         ws.cell('%s%s' % ('A', 4)).value = 'Date'
