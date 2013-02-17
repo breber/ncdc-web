@@ -4,6 +4,7 @@ import forms
 import ldap
 import logging
 import json
+import re
 import tempfile
 import time
 
@@ -79,6 +80,7 @@ class Login(UserAwareView):
         user = None
 
         username = form.username.data
+        username = re.escape(username)
         password = form.password.data
         remember = form.remember_me.data
 
