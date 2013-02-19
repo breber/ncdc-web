@@ -104,7 +104,7 @@ class Login(UserAwareView):
                 conn.set_option(ldap.OPT_REFERRALS, 0)
                 conn.simple_bind_s(username + '@site2.cdc.com', password)
             
-                result_id = conn.search('DC=site2,DC=cdc,DC=com', ldap.SCOPE_SUBTREE, "(cn=" + username + ")")
+                result_id = conn.search('DC=site2,DC=cdc,DC=com', ldap.SCOPE_SUBTREE, "(sAMAccountName=" + username + ")")
                                 
                 result_set = []
                 while 1:
@@ -127,7 +127,7 @@ class Login(UserAwareView):
                             if len(entry_tuple) > 0:
                                 for group in entry_tuple['memberOf']:
                                     logging.debug("Group: %s" % group)
-                                    if "CN=cdc," in group:
+                                    if "CN=www," in group:
                                         isActive = True
                                     if "CN=cdc-admins," in group:
                                         isAdmin = True
@@ -378,7 +378,7 @@ class DeleteUser(UserAwareView):
     decorators = [login_required]
     
     def post(self):
-        if not self.user.is_admin or not self.user.is_team_admin:
+        if not self.user.is_admin and not self.user.is_team_admin:
             return "error"
 
         username = None
