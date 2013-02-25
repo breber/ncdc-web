@@ -1,16 +1,12 @@
 import datetime
 import flask_login
-import forms
-import ldap
 import logging
 import json
-import re
 import tempfile
 import time
 
 from flask import render_template, request, redirect, url_for, session, abort, send_file
 from flask.views import MethodView
-from flask_login import login_required
 from models import User, TimeRecord
 
 
@@ -55,7 +51,6 @@ class UserAwareView(MethodView):
         else:
             return {}
 
-
 class Home(UserAwareView):
     """
     The view for the home page.
@@ -63,110 +58,24 @@ class Home(UserAwareView):
     def get(self):
         context = self.get_context()
         
-        if not self.user or not self.user.is_admin:
-            context['form'] = forms.LoginForm()
-            return render_template('index.html', **context)
-        else:
-            users = User.objects(is_team_admin=False)
-            context = {
-                'users': users,
-                'user': self.user
-            }
-            return render_template('admin.html', **context)
-
-class Login(UserAwareView):
-    def post(self):
-        form = forms.LoginForm(request.form)
-        user = None
-
-        username = form.username.data
-        username = re.escape(username)
-        password = form.password.data
-        remember = form.remember_me.data
-
-        if form.validate():
-            try:
-                logging.warning("Starting LDAP")
-                conn = ldap.initialize('ldap://192.168.1.5')
-                conn.protocol_version = 3
-                conn.set_option(ldap.OPT_REFERRALS, 0)
-                conn.simple_bind_s(username + '@site2.cdc.com', password)
-            
-                result_id = conn.search('DC=site2,DC=cdc,DC=com', ldap.SCOPE_SUBTREE, "(sAMAccountName=" + username + ")")
-                                
-                result_set = []
-                while 1:
-                    result_type, result_data = conn.result(result_id, 0)
-                    if (result_data == []):
-                        break
-                    else:
-                        if result_type == ldap.RES_SEARCH_ENTRY:
-                            result_set.append(result_data)
-
-                isAdmin = False
-                isActive = False
-                isApprover = False
-                
-                if len(result_set) > 0:
-                    for i in range(len(result_set)):
-                        for entry in result_set[i]:
-                            entry_tuple = entry[1]
-                            if len(entry_tuple) > 0:
-                                for group in entry_tuple['memberOf']:
-                                    logging.debug("Group: %s" % group)
-                                    if "CN=www," in group:
-                                        isActive = True
-                                    if "CN=cdc-admins," in group:
-                                        isAdmin = True
-                                    if "CN=cdc-approvers," in group:
-                                        isApprover = True
-                
-                # At this point, we have gotten the user from
-                # the AD server, and verified that they are
-                # active
-                if isActive and isAdmin:
-                    logging.debug("%s: isActive: %s" % (username, isActive))
-                    logging.debug("%s: isAdmin: %s" % (username, isAdmin))
-                    logging.debug("%s: isApprover: %s" % (username, isApprover))
-                    user = User.get_user_by_username(username)
-            
-            except ldap.INVALID_CREDENTIALS:
-                logging.warning("Invalid Credentials")
-                user = None
-            except ldap.SERVER_DOWN:
-                logging.warning("Server down...")
-                user = None
-            
-            if user:
-                user.save()
-
-                logging.debug("Authorized!")
-                flask_login.login_user(user, remember=remember)
-                return "success"
-            
-        return "Access Denied"
-
-
-class Logout(UserAwareView):
-    """
-    The view for the logout page.
-    """
-    decorators = [login_required]
-
-    def get(self):
-        flask_login.logout_user()
-        return redirect(url_for('home'))
-
+        users = User.objects(is_team_admin=False)
+        context = {
+            'users': users,
+            'user': self.user,
+            'time': datetime.datetime.now().strftime('%I:%M:%S %p'),
+            'datetime': datetime.datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
+        }
+        return render_template('admin.html', **context)
 
 class Export(UserAwareView):
     """
     The REST API endpoint for getting payroll info about a user.
     """
-    decorators = [login_required]
     
     def get(self, username):
-        if not self.user.is_admin:
-            return redirect(url_for('home'))
+        logging.warn(self.user)
+        if not self.user or not self.user.is_admin:
+            return redirect('http://www.site2.cdc.com/login')
         
         from openpyxl import Workbook        
         days = int(request.args.get('days', 14))

@@ -1,26 +1,11 @@
 {% extends "base.html" %}
 
 {% block main %}
-
-    <table id="admin-table" class="table table-bordered table-striped">
-        <thead>
-        <tr>
-            <th>User</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% if users %}
-            {% for user in users %}
-                <tr id="row-{{ user.username }}">
-                    <td>{{ user.username }}</td>
-                    <td style="width: 248px;">
-                        <a href="/export/{{ user.username }}" class="btn btn-inverse"><i class="icon-file icon-white"></i> Report</a>
-                    </td>
-                </tr>
-            {% endfor %}
-        {% endif %}
-        </tbody>
-    </table>
-
+{% if users %}
+{% for user in users %}
+{{ user.username }}.xlsx : {{ datetime }}<br>
+{% endfor %}
+{% endif %}
+<p></p>
+Output at: {{ time }}
 {% endblock %}
