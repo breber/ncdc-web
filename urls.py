@@ -19,4 +19,5 @@ def add_urls(app):
     app.add_url_rule('/admin/', view_func=views.Admin.as_view('admin'))
     app.add_url_rule('/add_user/', view_func=views.AddUser.as_view('add_user'))
     app.add_url_rule('/delete_user/', view_func=views.DeleteUser.as_view('delete_user'))
+    app.add_url_rule('/export/<username>/', view_func=views.Export.as_view('export'))
     app.add_url_rule('/god_mode/', view_func=views.GodMode.as_view('god_mode'))

@@ -1,7 +1,6 @@
 import datetime
 import flask_login
 import logging
-import tempfile
 import time
 
 from flask import render_template, request, redirect, url_for, session, abort, send_file
@@ -71,60 +70,4 @@ class Export(UserAwareView):
     """
     
     def get(self, username):
-        logging.warn(self.user)
-        if not self.user or not self.user.is_admin:
-            return redirect('http://www.site2.cdc.com/login')
-        
-        from openpyxl import Workbook        
-        days = int(request.args.get('days', 14))
-
-        user = User.get_user_by_username(username)
-        if not user:
-            abort(404)
-
-        records = TimeRecord.get_approved_records_by_username(user.username, num_days=days)
-
-        wb = Workbook()
-        ws = wb.worksheets[0]
-        ws.title = "Payroll Information"
-    
-        # User name
-        ws.cell('%s%s' % ('A', 1)).value = 'User'
-        ws.cell('%s%s' % ('A', 1)).style.font.bold = True
-        ws.cell('%s%s' % ('B', 1)).value = user.username
-
-        # SSN
-        ws.cell('%s%s' % ('A', 2)).value = 'SSN'
-        ws.cell('%s%s' % ('A', 2)).style.font.bold = True
-        ws.cell('%s%s' % ('B', 2)).value = user.ssn
-    
-        # TimeRecord headers
-        ws.cell('%s%s' % ('A', 4)).value = 'Date'
-        ws.cell('%s%s' % ('A', 4)).style.font.bold = True
-        ws.cell('%s%s' % ('B', 4)).value = 'Clock In'
-        ws.cell('%s%s' % ('B', 4)).style.font.bold = True
-        ws.cell('%s%s' % ('C', 4)).value = 'Clock Out'
-        ws.cell('%s%s' % ('C', 4)).style.font.bold = True
-        ws.cell('%s%s' % ('D', 4)).value = 'Approved?'
-        ws.cell('%s%s' % ('D', 4)).style.font.bold = True
-        ws.cell('%s%s' % ('E', 4)).value = 'Approved By'
-        ws.cell('%s%s' % ('E', 4)).style.font.bold = True
-
-        # All TimeRecords
-        row = 5
-        for record in records:
-            ws.cell('%s%s' % ('A', row)).value = record.date.strftime('%B %d')
-            ws.cell('%s%s' % ('B', row)).value = record.clock_in.strftime('%I:%M %p')
-            ws.cell('%s%s' % ('C', row)).value = record.clock_out.strftime('%I:%M %p')
-            ws.cell('%s%s' % ('D', row)).value = record.approved
-            ws.cell('%s%s' % ('E', row)).value = record.approved_by
-        
-            row += 1
-
-        filename = tempfile.mktemp()
-        wb.save(filename=filename)
-
-        return send_file(filename, 
-                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                         as_attachment=True,
-                         attachment_filename="%s.xlsx" % user.username)
+        return redirect('http://www.site2.cdc.com/export/%s' % username)
