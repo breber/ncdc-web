@@ -1,13 +1,10 @@
 import logging
 import os
 import sys
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask
 from flask.ext.mongoengine import MongoEngine
-from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager
-
 from utils import user_unauthorized_callback, load_user
-
 from urls import add_urls
 
 logging.basicConfig(level=logging.DEBUG)
@@ -16,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 
 # Creating the Flask app object
-app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, 'static'), static_url_path='/static')
+app = Flask(__name__)
 
 # Flask config settings
 app.config['MONGODB_DB'] = 'ncdc'

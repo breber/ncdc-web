@@ -1,4 +1,4 @@
-NCDC Web Box
+NCDC API Box
 ============
 
 This is a web application written for the 2013 Iowa State National Cyber Defense Competition.  It is purposefully written to be vulnerable to a number of attacks.

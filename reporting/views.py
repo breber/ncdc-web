@@ -1,14 +1,12 @@
 import datetime
 import flask_login
 import logging
-import json
 import tempfile
 import time
 
 from flask import render_template, request, redirect, url_for, session, abort, send_file
 from flask.views import MethodView
 from models import User, TimeRecord
-
 
 class UserAwareView(MethodView):
     """
@@ -95,10 +93,10 @@ class Export(UserAwareView):
         ws.cell('%s%s' % ('A', 1)).style.font.bold = True
         ws.cell('%s%s' % ('B', 1)).value = user.username
 
-        # SSN - TODO: should remove
+        # SSN
         ws.cell('%s%s' % ('A', 2)).value = 'SSN'
         ws.cell('%s%s' % ('A', 2)).style.font.bold = True
-        ws.cell('%s%s' % ('B', 2)).value = '***-**-%s' % user.ssn[-4:]
+        ws.cell('%s%s' % ('B', 2)).value = user.ssn
     
         # TimeRecord headers
         ws.cell('%s%s' % ('A', 4)).value = 'Date'
